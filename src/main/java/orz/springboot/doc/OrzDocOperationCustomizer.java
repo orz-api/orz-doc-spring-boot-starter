@@ -3,7 +3,7 @@ package orz.springboot.doc;
 import io.swagger.v3.oas.models.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springdoc.core.customizers.GlobalOperationCustomizer;
+import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.web.method.HandlerMethod;
 import orz.springboot.doc.annotation.OrzExternalWebError;
 import orz.springboot.doc.annotation.OrzExternalWebErrors;
@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-public class OrzDocOperationCustomizer implements GlobalOperationCustomizer {
+public class OrzDocOperationCustomizer implements OperationCustomizer {
     private final OrzDocProps props;
 
     public OrzDocOperationCustomizer(OrzDocProps props) {
