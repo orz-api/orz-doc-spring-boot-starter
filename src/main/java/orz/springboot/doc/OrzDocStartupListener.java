@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 import static org.springdoc.core.utils.Constants.SPRINGDOC_ENABLED;
 import static orz.springboot.base.description.OrzDescriptionUtils.desc;
 import static orz.springboot.doc.OrzDocConstants.*;
+import static orz.springboot.web.OrzWebConstants.API_PACKAGE;
 
 @Slf4j
 public class OrzDocStartupListener implements OrzBaseStartupListener {
@@ -85,7 +86,7 @@ public class OrzDocStartupListener implements OrzBaseStartupListener {
     }
 
     public Map<String, String> getScopePackageMap() {
-        var basePath = ClassUtils.convertClassNameToResourcePath(applicationClass.getPackageName() + "." + ROOT_PACKAGE);
+        var basePath = ClassUtils.convertClassNameToResourcePath(applicationClass.getPackageName() + "." + API_PACKAGE);
         var searchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + basePath + "/**/*.class";
         Resource[] resources;
         try {
@@ -134,7 +135,7 @@ public class OrzDocStartupListener implements OrzBaseStartupListener {
                     .map(s -> StringUtils.defaultIfBlank(s, null))
                     .orElse(null);
             if (scope != null) {
-                return ROOT_PACKAGE.equals(scope) ? DEFAULT_SCOPE : scope;
+                return API_PACKAGE.equals(scope) ? DEFAULT_SCOPE : scope;
             }
         } catch (IOException ignored) {
         }
@@ -148,7 +149,7 @@ public class OrzDocStartupListener implements OrzBaseStartupListener {
                     .map(s -> StringUtils.defaultIfBlank(s, null))
                     .orElse(null);
             if (scope != null) {
-                return ROOT_PACKAGE.equals(scope) ? DEFAULT_SCOPE : scope;
+                return API_PACKAGE.equals(scope) ? DEFAULT_SCOPE : scope;
             }
         } catch (IOException ignored) {
         }
@@ -160,7 +161,7 @@ public class OrzDocStartupListener implements OrzBaseStartupListener {
                     .map(s -> StringUtils.defaultIfBlank(s, null))
                     .orElse(null);
             if (scope != null) {
-                return ROOT_PACKAGE.equals(scope) ? DEFAULT_SCOPE : scope;
+                return API_PACKAGE.equals(scope) ? DEFAULT_SCOPE : scope;
             }
         } catch (IOException ignored) {
         }
@@ -174,7 +175,7 @@ public class OrzDocStartupListener implements OrzBaseStartupListener {
                 .filter(names -> names.length >= 2)
                 .map(names -> names[names.length - 2])
                 .map(s -> StringUtils.defaultIfBlank(s, null))
-                .map(s -> ROOT_PACKAGE.equals(s) ? DEFAULT_SCOPE : s)
+                .map(s -> API_PACKAGE.equals(s) ? DEFAULT_SCOPE : s)
                 .orElse(null);
     }
 

@@ -97,11 +97,14 @@ public class OrzDocOperationCustomizer implements OperationCustomizer {
 
     private String getOperationId(OrzWebApi webApi) {
         var builder = new StringBuilder();
-        builder.append(StringUtils.uncapitalize(webApi.domain()));
+        builder.append(webApi.domain());
         if (StringUtils.isNotBlank(webApi.resource())) {
-            builder.append(StringUtils.capitalize(webApi.resource()));
+            builder.append(webApi.resource());
         }
-        builder.append(StringUtils.capitalize(webApi.action()));
+        builder.append(webApi.action());
+        if (StringUtils.isNotBlank(webApi.by())) {
+            builder.append("By").append(webApi.by());
+        }
         if (webApi.variant() > 0) {
             builder.append("V").append(webApi.variant());
         }
