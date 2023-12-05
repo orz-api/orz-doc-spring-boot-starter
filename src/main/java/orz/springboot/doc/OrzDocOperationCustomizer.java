@@ -28,6 +28,9 @@ public class OrzDocOperationCustomizer implements OperationCustomizer {
         if (webApi != null) {
             operation.setTags(getTags(webApi));
             operation.setOperationId(getOperationId(webApi));
+            if (StringUtils.isNotBlank(webApi.description())) {
+                operation.setSummary(webApi.description());
+            }
 
             var errors = getErrors(handlerMethod);
             var externalErrors = getExternalErrors(handlerMethod);
@@ -102,12 +105,7 @@ public class OrzDocOperationCustomizer implements OperationCustomizer {
             builder.append(webApi.resource());
         }
         builder.append(webApi.action());
-        if (StringUtils.isNotBlank(webApi.by())) {
-            builder.append("By").append(webApi.by());
-        }
-        if (webApi.variant() > 0) {
-            builder.append("V").append(webApi.variant());
-        }
+        builder.append("V").append(webApi.variant());
         return builder.toString();
     }
 }
