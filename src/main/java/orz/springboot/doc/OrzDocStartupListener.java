@@ -13,12 +13,10 @@ import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.SimpleMetadataReaderFactory;
 import org.springframework.util.ClassUtils;
 import orz.springboot.base.OrzBaseStartupListener;
+import orz.springboot.web.OrzWebUtils;
 import orz.springboot.web.annotation.OrzWebApi;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,7 +25,8 @@ import java.util.stream.Stream;
 
 import static org.springdoc.core.utils.Constants.SPRINGDOC_ENABLED;
 import static orz.springboot.base.description.OrzDescriptionUtils.desc;
-import static orz.springboot.doc.OrzDocConstants.*;
+import static orz.springboot.doc.OrzDocConstants.GROUP_BEAN_PREFIX;
+import static orz.springboot.doc.OrzDocConstants.PROPS_PREFIX;
 import static orz.springboot.web.OrzWebConstants.API_PACKAGE;
 
 @Slf4j
@@ -57,28 +56,14 @@ public class OrzDocStartupListener implements OrzBaseStartupListener {
                         .map(OrzDocProps.ScopeConfig::getDisplayName)
                         .map(s -> StringUtils.defaultIfBlank(s, null))
                         .orElse(StringUtils.capitalize(scope));
-                if (DEFAULT_SCOPE.equals(scope)) {
-                    var excludePackages = scopePackageMap.entrySet().stream()
-                            .filter(e -> !DEFAULT_SCOPE.equals(e.getKey()))
-                            .map(Map.Entry::getValue)
-                            .toArray(String[]::new);
-                    beanFactory.registerSingleton(GROUP_BEAN_PREFIX + scope, GroupedOpenApi.builder()
-                            .group(scope)
-                            .displayName(displayName)
-                            .packagesToExclude(excludePackages)
-                            .addOpenApiCustomizer(new OrzDocOpenApiCustomizer(scope, props))
-                            .addOperationCustomizer(new OrzDocOperationCustomizer(props))
-                            .build());
-                } else {
-                    beanFactory.registerSingleton(GROUP_BEAN_PREFIX + scope, GroupedOpenApi.builder()
-                            .group(scope)
-                            .displayName(displayName)
-                            .packagesToScan(pkg)
-                            .addOpenApiCustomizer(new OrzDocOpenApiCustomizer(scope, props))
-                            .addOperationCustomizer(new OrzDocOperationCustomizer(props))
-                            .addRouterOperationCustomizer(new OrzDocRouterOperationCustomizer(scope))
-                            .build());
-                }
+                beanFactory.registerSingleton(GROUP_BEAN_PREFIX + scope, GroupedOpenApi.builder()
+                        .group(scope)
+                        .displayName(displayName)
+                        .packagesToScan(pkg)
+                        .addOpenApiCustomizer(new OrzDocOpenApiCustomizer(scope, props))
+                        .addOperationCustomizer(new OrzDocOperationCustomizer(props))
+                        .addRouterOperationCustomizer(new OrzDocRouterOperationCustomizer(scope))
+                        .build());
             });
         } else {
             log.error(desc("OrzDocProps not bound", "prefix", PROPS_PREFIX));
@@ -114,11 +99,11 @@ public class OrzDocStartupListener implements OrzBaseStartupListener {
                 return;
             }
             if (reader.getAnnotationMetadata().hasAnnotation(OrzWebApi.class.getName())) {
-                var cls = reader.getClassMetadata().getClassName();
-                var pkg = getPackage(cls);
-                var scope = getScope(cls);
-                if (scope != null && pkg != null) {
-                    scopePackageMap.put(scope, pkg);
+                var className = reader.getClassMetadata().getClassName();
+                var packageName = getPackageName(className);
+                var scope = OrzWebUtils.getScope(className);
+                if (scope != null && packageName != null) {
+                    scopePackageMap.put(scope, packageName);
                 }
             }
         });
@@ -127,62 +112,54 @@ public class OrzDocStartupListener implements OrzBaseStartupListener {
 
     private static String getScope(Resource resource) {
         try {
-            var scope = Optional.of(resource.getURI())
-                    .map(URI::getPath)
-                    .map(path -> path.split("/"))
-                    .filter(paths -> paths.length >= 2)
-                    .map(paths -> paths[paths.length - 2])
-                    .map(s -> StringUtils.defaultIfBlank(s, null))
-                    .orElse(null);
+            var scope = getScopeFromPath(resource.getURI().getPath());
             if (scope != null) {
-                return API_PACKAGE.equals(scope) ? DEFAULT_SCOPE : scope;
+                return scope;
             }
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
 
         try {
-            var scope = Optional.of(resource.getURL())
-                    .map(URL::getPath)
-                    .map(path -> path.split("/"))
-                    .filter(paths -> paths.length >= 2)
-                    .map(paths -> paths[paths.length - 2])
-                    .map(s -> StringUtils.defaultIfBlank(s, null))
-                    .orElse(null);
+            var scope = getScopeFromPath(resource.getURL().getPath());
             if (scope != null) {
-                return API_PACKAGE.equals(scope) ? DEFAULT_SCOPE : scope;
+                return scope;
             }
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
 
         try {
-            var scope = Optional.of(resource.getFile())
-                    .map(File::getParentFile)
-                    .map(File::getName)
-                    .map(s -> StringUtils.defaultIfBlank(s, null))
-                    .orElse(null);
+            var scope = getScopeFromPath(resource.getFile().toURI().getPath());
             if (scope != null) {
-                return API_PACKAGE.equals(scope) ? DEFAULT_SCOPE : scope;
+                return scope;
             }
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
 
         return null;
     }
 
-    private static String getScope(String cls) {
+    private static String getPackageName(String cls) {
         return Optional.ofNullable(cls)
-                .map(name -> name.split("\\."))
-                .filter(names -> names.length >= 2)
-                .map(names -> names[names.length - 2])
-                .map(s -> StringUtils.defaultIfBlank(s, null))
-                .map(s -> API_PACKAGE.equals(s) ? DEFAULT_SCOPE : s)
-                .orElse(null);
-    }
-
-    private static String getPackage(String cls) {
-        return Optional.ofNullable(cls)
+                .filter(s -> s.contains("."))
                 .map(name -> name.substring(0, name.lastIndexOf(".")))
                 .map(s -> StringUtils.defaultIfBlank(s, null))
                 .orElse(null);
+    }
+
+    private static String getScopeFromPath(String path) {
+        return Optional.ofNullable(path)
+                .filter(StringUtils::isNotBlank)
+                .filter(s -> s.contains(API_PACKAGE))
+                .map(s -> removePathExtension(s).replace("/", "."))
+                .map(OrzWebUtils::getScope)
+                .orElse(null);
+    }
+
+    private static String removePathExtension(String path) {
+        var index = path.lastIndexOf(".");
+        if (index == -1) {
+            return path;
+        }
+        return path.substring(0, index);
     }
 }
