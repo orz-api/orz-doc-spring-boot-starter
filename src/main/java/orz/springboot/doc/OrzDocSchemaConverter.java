@@ -18,6 +18,7 @@ public class OrzDocSchemaConverter {
             if (schema instanceof IntegerSchema) {
                 if ("integer".equals(schema.getType()) && "int64".equals(schema.getFormat())) {
                     var newSchema = new StringSchema();
+                    newSchema.setExample("1");
                     if (props.isLongToStringWithFormat()) {
                         newSchema.setFormat("int64");
                     }
