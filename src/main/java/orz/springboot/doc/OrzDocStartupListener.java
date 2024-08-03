@@ -52,7 +52,11 @@ public class OrzDocStartupListener implements OrzBaseStartupListener {
             var beanFactory = context.getBeanFactory();
             var scopePackageMap = getScopePackageMap();
             scopePackageMap.forEach((scope, pkg) -> {
-                var displayName = Optional.ofNullable(props.getScopes().get(scope))
+                var scopeConfig = Optional.ofNullable(props.getScopes().get(scope));
+                if (!scopeConfig.map(OrzDocProps.ScopeConfig::isEnabled).orElse(true)) {
+                    return;
+                }
+                var displayName = scopeConfig
                         .map(OrzDocProps.ScopeConfig::getDisplayName)
                         .map(s -> StringUtils.defaultIfBlank(s, null))
                         .orElse(StringUtils.capitalize(scope));

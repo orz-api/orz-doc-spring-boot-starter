@@ -1,0 +1,10 @@
+orz:
+  doc:
+    scopes:
+      WebV1:
+        enabled: false
+        display-name: web api variant 1
+      WebV2:
+        display-name: web api variant 2
+      WebV3:
+        display-name: web api variant 3

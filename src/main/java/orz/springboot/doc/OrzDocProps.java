@@ -24,6 +24,8 @@ public class OrzDocProps {
 
     @Data
     public static class ScopeConfig {
+        private boolean enabled = true;
+
         private String displayName;
 
         @Valid
