@@ -1,3 +1,6 @@
+spring:
+  application:
+    name: orz-doc-spring-boot-starter-test
 orz:
   doc:
     scopes:
